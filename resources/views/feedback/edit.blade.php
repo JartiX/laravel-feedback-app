@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Обратная связь - Feedback App')
+@section('title', 'Редактирование отзыва')
 
 @section('styles')
     .form-container {
@@ -51,14 +51,6 @@
         font-size: 14px;
         margin-top: 5px;
     }
-    .success-message {
-        background: #c6f6d5;
-        color: #22543d;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        border-left: 4px solid #38a169;
-    }
     .submit-btn {
         width: 100%;
         padding: 15px;
@@ -107,33 +99,18 @@
 
 @section('content')
     <div class="form-container">
-        <h2 class="form-title">Форма обратной связи</h2>
+        <h2 class="form-title">Редактирование отзыва</h2>
 
-        @if(session('success'))
-            <div class="success-message">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="error-message" style="background: #fed7d7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <ul style="margin: 0; padding-left: 20px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('feedback.store') }}">
+        <form method="POST" action="{{ route('feedback.update', $feedback) }}">
             @csrf
+            @method('PUT')
 
             <div class="form-group">
                 <label for="category_id">Категория *</label>
                 <select name="category_id" id="category_id" required>
                     <option value="">Выберите категорию</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}" {{ old('category_id', $feedback->category_id) == $category->id ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                     @endforeach
@@ -144,24 +121,8 @@
             </div>
 
             <div class="form-group">
-                <label for="name">Имя *</label>
-                <input type="text" name="name" id="name" value="{{ old('name') }}" required>
-                @error('name')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email *</label>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" required>
-                @error('email')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div class="form-group">
                 <label for="subject">Тема *</label>
-                <input type="text" name="subject" id="subject" value="{{ old('subject') }}" required>
+                <input type="text" name="subject" id="subject" value="{{ old('subject', $feedback->subject) }}" required>
                 @error('subject')
                     <div class="error-message">{{ $message }}</div>
                 @enderror
@@ -169,18 +130,31 @@
 
             <div class="form-group">
                 <label for="message">Сообщение *</label>
-                <textarea name="message" id="message" required>{{ old('message') }}</textarea>
+                <textarea name="message" id="message" required>{{ old('message', $feedback->message) }}</textarea>
                 @error('message')
                     <div class="error-message">{{ $message }}</div>
                 @enderror
             </div>
 
             <div class="form-group">
-                <label>Оценка (необязательно)</label>
+                <label for="status">Статус *</label>
+                <select name="status" id="status" required>
+                    <option value="pending" {{ old('status', $feedback->status) == 'pending' ? 'selected' : '' }}>Новый</option>
+                    <option value="in_progress" {{ old('status', $feedback->status) == 'in_progress' ? 'selected' : '' }}>В работе</option>
+                    <option value="resolved" {{ old('status', $feedback->status) == 'resolved' ? 'selected' : '' }}>Решен</option>
+                    <option value="closed" {{ old('status', $feedback->status) == 'closed' ? 'selected' : '' }}>Закрыт</option>
+                </select>
+                @error('status')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label>Оценка</label>
                 <div class="rating-group">
                     @for($i = 1; $i <= 5; $i++)
                         <label class="rating-label">
-                            <input type="radio" name="rating" value="{{ $i }}" {{ old('rating') == $i ? 'checked' : '' }}>
+                            <input type="radio" name="rating" value="{{ $i }}" {{ old('rating', $feedback->rating) == $i ? 'checked' : '' }}>
                             {{ $i }} ⭐
                         </label>
                     @endfor
@@ -191,12 +165,12 @@
             </div>
 
             <div class="form-group">
-                <label>Теги (необязательно)</label>
+                <label>Теги</label>
                 <div class="tags-group">
                     @foreach($tags as $tag)
                         <label class="tag-checkbox">
                             <input type="checkbox" name="tags[]" value="{{ $tag->id }}"
-                                {{ in_array($tag->id, old('tags', [])) ? 'checked' : '' }}>
+                                {{ in_array($tag->id, old('tags', $selectedTags)) ? 'checked' : '' }}>
                             {{ $tag->name }}
                         </label>
                     @endforeach
@@ -206,7 +180,7 @@
                 @enderror
             </div>
 
-            <button type="submit" class="submit-btn">Отправить сообщение</button>
+            <button type="submit" class="submit-btn">Сохранить изменения</button>
         </form>
     </div>
 @endsection
